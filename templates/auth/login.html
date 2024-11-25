@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<title>Login</title>
+	<!-- HTML5 Shim and Respond.js IE11 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 11]>
+		<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="description"
+		content="Dasho Bootstrap admin template made using Bootstrap 5 and it has huge amount of ready made feature, UI components, pages which completely fulfills any dashboard needs." />
+	<meta name="keywords"
+		content="admin templates, bootstrap admin templates, bootstrap 5, dashboard, dashboard templets, sass admin templets, html admin templates, responsive, bootstrap admin templates free download,premium bootstrap admin templates, Dasho, Dasho bootstrap admin template">
+	<meta name="author" content="Phoenixcoded" />
+
+	<!-- Favicon icon -->
+	<link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/x-icon">
+	<!-- fontawesome icon -->
+	<link rel="stylesheet" href="{% static 'fonts/fontawesome/css/fontawesome-all.min.css' %}">
+	<!-- animation css -->
+	<link rel="stylesheet" href="{% static 'plugins/animation/css/animate.min.css' %}">
+	<!-- vendor css -->
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+</head>
+
+<!-- [ signin-img-tabs ] start -->
+<div class="blur-bg-images"></div>
+<div class="auth-wrapper">
+	<div class="auth-content container">
+		<div class="card">
+			<div class="row align-items-center">
+				<div class="col-md-6">
+					<div class="card-body">
+						<h2 class="mb-4">Hush kelibsiz</h2>
+						<form accept="{% url 'login' %}" method="post">
+                            {% csrf_token %}
+                            <div class="toggle-block">
+                                <ol class="position-relative carousel-indicators justify-content-start">
+                                    <li class=""></li>
+                                    <li class="active"></li>
+                                </ol>
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <div>{{message}}</div>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-group mb-2">
+                                    <label class="form-label">Login kiriting:</label>
+                                    <input type="text" class="form-control" placeholder="Username" name="username">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Parol</label>
+                                    <input type="password" class="form-control" placeholder="*********" name="password">
+                                </div>
+                                <button class="btn btn-primary mb-4 btf">Login</button>
+                            </div>
+                        </form>
+					</div>
+				</div>
+				<div class="col-md-6 d-none d-md-block">
+					<img src="{% static 'images/auth/img-auth-2.jpg' %}" alt=""
+						class="img-fluid bd-placeholder-img bd-placeholder-img-lg d-block w-100">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- [ signin-img-tabs ] end -->
+
+<!-- Required Js -->
+<script src="{% static 'js/vendor-all.min.js' %}"></script>
+<script src="{% static 'plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+
+<script>
+	$('.toggle-btn').on('click', function () {
+		$('.toggle-block').toggle();
+	})
+</script>
+
+
+
+
+
+</body>
+
+</html>

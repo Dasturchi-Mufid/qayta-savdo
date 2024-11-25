@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header table-card-header">
+                                        <h5>Sotuvchilar haqida</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dt-responsive table-responsive">
+                                            <div id="basic-btn_wrapper" class="dataTables_wrapper dt-bootstrap4">
+                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
+                                                    <thead class="border-bottom-danger">
+                                                        <tr role="row">
+                                                            <th colspan="4">Hodim FISH</th>
+                                                            <th>Fillial</th>
+                                                            <th colspan="2">Sana</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="3">Shaxsiy reja</td>
+                                                            <th colspan="2">Joriy savdo</td>
+                                                            <th colspan="2">Atmen</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="3">Sof savdo</td>
+                                                            <th colspan="2">Plan bajarilishi</td>
+                                                            <th colspan="2">Orqada qolish</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="7">Savdolar</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>№</th>
+                                                            <th>Shartnoma</th>
+                                                            <th>Sana</th>
+                                                            <th>Mijoz</th>
+                                                            <th>Birdan summa</th>
+                                                            <th>Nasiya summa</th>
+                                                            <th>Muddat</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for i in sellers %}
+                                                            <tr class="border-bottom-primary">
+                                                                <th>{{forloop.counter}}</th>
+                                                                <th>Q_100</th>
+                                                                <th>01.01.2001</th>
+                                                                <th>F I SH</th>
+                                                                <th>15 000 000</th>
+                                                                <th>20 000 000</th>
+                                                                <th>12 oy</th>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th colspan="7">Atmenlar</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>№</th>
+                                                            <th>Shartnoma</th>
+                                                            <th>Sanasi</th>
+                                                            <th>FISH</th>
+                                                            <th>Birdan summa</th>
+                                                            <th>Nasiya summa</th>
+                                                            <th>Muddat</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for i in sellers %}
+                                                        <tr>
+                                                            <th>{{forloop.counter}}</th>
+                                                            <th>Q_100</th>
+                                                            <th>01.01.2001</th>
+                                                                <th>FISH</th>
+                                                                <th>15 000 000</th>
+                                                                <th>20 000 000</th>
+                                                                <th>12 oy</th>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

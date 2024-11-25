@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header table-card-header">
+                                        <h5>Xaridorlar</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dt-responsive table-responsive">
+                                            <div id="basic-btn_wrapper" class="dataTables_wrapper dt-bootstrap4">
+                                                <div class="dt-buttons btn-group"> 
+                                                    <form action="" method="post">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="excel" value="1">
+                                                        <button class="btn btn-secondary buttons-excel buttons-html5" tabindex="0" aria-controls="basic-btn" type="submit">
+                                                            <span>Excel</span>
+                                                        </button>
+                                                    </form> 
+                                                    <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="basic-btn" type="button" onclick="printTable()">
+                                                        <span>Print</span>
+                                                    </button> 
+                                                </div>
+                                                <div id="basic-btn_filter" class="dataTables_filter">
+                                                    <label><input type="hidden" class="form-control form-control-sm" placeholder="" aria-controls="basic-btn"></label>
+                                                </div>
+                                                <table id="basic-btn" class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
+                                                    <thead>
+                                                        <tr role="row">
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Age: activate to sort column ascending" style="width: 99.1719px;">Xaridor ID</th>
+                                                            <th class="sorting_asc" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Name: activate to sort column descending" style="width: 256.875px;">Xaridor FIO</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Position: activate to sort column ascending" style="width: 378.656px;">Telefon raqam</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Office: activate to sort column ascending" style="width: 193.453px;">Xaridor passport</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Age: activate to sort column ascending" style="width: 99.1719px;">JSHSHIR</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Start date: activate to sort column ascending" style="width: 203.578px;">Tug`ilgan kun</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Salary: activate to sort column ascending" style="width: 148.266px;">Xarid limiti oy boshi</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Salary: activate to sort column ascending" style="width: 148.266px;">Joriy oy xaridi</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Salary: activate to sort column ascending" style="width: 148.266px;">Xarid limiti qoldiq</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Salary: activate to sort column ascending" style="width: 148.266px;">Xarid %</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Start date: activate to sort column ascending" style="width: 203.578px;">Xarid uchun kelish sanasi</th>
+                                                            <th class="sorting_asc" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Name: activate to sort column descending" style="width: 256.875px;">Sotuvchi</th>
+                                                            <th class="sorting_asc" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Name: activate to sort column descending" style="width: 256.875px;">Mas`ul hodim</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for seller in customers %}
+                                                        <tr role="row" class="odd">
+                                                            <td>{{seller.id}}</td>
+                                                            <td class="sorting_1"><a href="{% url 'customer_detail' seller.id %}">{{seller.name}}</a></td>
+                                                            <td>
+                                                                {% for phone in seller.phone %}
+                                                                    {{ phone }}<br>
+                                                                {% endfor %}
+                                                            </td>
+                                                            <td>{{seller.passport}}</td>
+                                                            <td>{% if seller.pnfl %} {{seller.pnfl}} {% else %} <div style="color: red;">JSHSHIR mavjud emas!{% endif %}</div></td>
+                                                            <td>{{seller.birth_date|date:"d.m.Y"}}</td>
+                                                            <td>{{seller.purchase_limit}}</td>
+                                                            <td>{{seller.current_purchase}}</td>
+                                                            <td>{{seller.balance}}</td>
+                                                            <td>{{seller.percent}}</td>
+                                                            <td>{% if seller.come_date %} {{seller.come_date}} {% else %} <div style="color: red;">Kelish sanasi aniq emas!{% endif %}</div></td>
+                                                            <td>{% if seller.seller %} {{seller.seller}} {% else %} <div style="color: red;">Sotuvchi biriktirilmagan!{% endif %}</div></td>
+                                                            <td>{% if seller.manager %} {{seller.manager}} {% else %} <div style="color: red;">Mas`ul hodim biriktirilmagan!{% endif %}</div></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                {% if customers.paginator.num_pages > 1 %}
+                                                    <div class="pagination-area">
+                                                        <!-- <div class="dataTables_info" id="basic-btn_info" role="status" aria-live="polite">{{ customers.start_index }} - {{ customers.end_index }} of {{ customers.paginator.count }}</div> -->
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination justify-content-center">
+                                                                {% if customers.has_previous %}
+                                                                    <li class="page-item">
+                                                                        <a class="page-link" href="?page={{customers.previous_page_number }}">
+                                                                            &laquo;
+                                                                        </a>
+                                                                    </li>
+                                                                {% endif %}
+                                                                {% for num in customers.paginator.page_range %}
+                                                                    {% if num == customers.number %}
+                                                                        <li class="page-item active">
+                                                                        <strong> <a class="page-link" href="#" tabindex="-1">{{ num }}</a></strong>
+                                                                        </li>
+                                                                    {% elif num > customers.number|add:'-4' and num < customers.number|add:'3' %}
+                                                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                                {% if customers.has_next %}
+                                                                    <li class="page-item">
+                                                                        <a class="page-link" href="?page={{ customers.next_page_number }}">
+                                                                            &raquo;
+                                                                        </a>
+                                                                    </li>
+                                                                {% endif %}
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+
+function printTable() {
+    var printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>Print Table</title>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(document.getElementById("basic-btn").outerHTML); // Get the HTML of the table
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+}
+
+</script>
+{% endblock %}

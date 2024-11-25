@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header table-card-header">
+                                        <h5>Xaridor haqida</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dt-responsive table-responsive">
+                                            <div id="basic-btn_wrapper" class="dataTables_wrapper dt-bootstrap4">
+                                                {% if customer %}
+                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
+                                                    <thead>
+                                                        <tr role="row">
+                                                            <th colspan="4">Mijozalr bilan ishlash oynasi</th>
+                                                            <th colspan="2">Avvalgisi</th>
+                                                            <th colspan="2">Keyingisi</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Xaridor ID</th>
+                                                            <th>Xaridor FIO</th>
+                                                            <th>Telefon raqam</th>
+                                                            <th>Xarid limit oy boshi</th>
+                                                            <th>Joriy oy xaridi</th>
+                                                            <th>Xarid limiti qoldiq</th>
+                                                            <th>Xarid %</th>
+                                                            <th>Xarid uchun kelish sanasi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr role="row" class="odd">
+                                                            <td>{{customer.id}}</td>
+                                                            <td class="sorting_1">{{customer.name}}</td>
+                                                            <td>
+                                                                {% for phone in customer.phone %}
+                                                                    {{ phone }}<br>
+                                                                {% endfor %}
+                                                            </td>
+                                                            <td>{{customer.purchase_limit}}</td>
+                                                            <td>{{customer.current_purchase}}</td>
+                                                            <td>{{customer.balance}}</td>
+                                                            <td>{{customer.percent}}</td>
+                                                            <td>{% if customer.come_date %} {{customer.come_date}} {% else %} <div style="color: red;">Kelish sanasi aniq emas!{% endif %}</div></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                <form method="post" action="{% url 'create_comment' %}">
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Izoh</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">Izoh</span>
+                                                            <textarea class="form-control" aria-label="With textarea" style="height: 122px;" name="comment"></textarea>
+                                                            <input type="hidden" name="customer_id" value="{{customer.id}}">
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary mb-4">Jo`natish</button>
+                                                </form>
+                                                {% if comments %}
+                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
+                                                    <thead>
+                                                        <tr>
+                                                            <th colspan="2">Avvalgi izohlar</th>
+                                                        </tr>
+                                                    </thead>
+                                                    {% for comment in comments %}
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{ comment.created_at|date:"d.m.Y H:i" }}</td>
+                                                            <td>{{comment.guest.name}}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="2">{{comment.comment}}</th>
+                                                        </tr>
+                                                    </tbody>
+                                                    {% endfor %}
+                                                </table>
+                                                {% endif %}
+                                                {% else %}
+                                                <h1 style="color: red; text-align: center;">Bunday foydalanuvchi mavjud emas!</h1>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
