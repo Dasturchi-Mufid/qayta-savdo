@@ -1,135 +1,34 @@
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.core.paginator import Paginator, PageNotAnInteger,EmptyPage
-from .models import Guest, Comment
 from databse import get_db_myconfig,get_db
-from .decorators import login_required_session
-from .queries import customers,variable
 from dotenv import load_dotenv
-import bcrypt
-import datetime
-import calendar
-import openpyxl
-import os
-import json
+from .models import Guest, Comment
+from .decorators import login_required_session
+from . import queries
+from . import func
+import os, json
+import pandas as pd
+
 
 load_dotenv()
 
 branches = json.loads(os.getenv('BRANCHES'))
 
 
-def binary_search(arr, target):
-    low, high = 0, arr[-1][0] - 1
-    while low <= high:
-        mid = (low + high) // 2
-        if arr[mid][0] == target:
-            return mid
-        elif arr[mid][0] < target:
-            low = mid + 1
-        else:
-            high = mid - 1
-    return -1 
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Check if the plain password matches the hashed password
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-
-def paginator_page(List,num,request):
-    paginator = Paginator(List,num)
-    page = request.GET.get('page')
-    try:
-        List = paginator.page(page)
-    except PageNotAnInteger:
-        List = paginator.page(1)
-    except EmptyPage:
-        List = paginator.page(paginator.num_pages)
-    return List
-
-def get_date():
-    current_date = datetime.date.today()
-    first_day = current_date.replace(day=1)
-    last_day = current_date.replace(day=calendar.monthrange(current_date.year, current_date.month)[1])
-
-    return first_day,last_day
-
-
-def get_data(query,db,params=[]):
-    
-    db.execute(query,params)
-    users = db.fetchall()
-    return users
-
-def download_people_xlsx(request, data):
-    # Create a workbook and a worksheet
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    sheet.title = 'People Data'
-
-    # Set the headers for the columns
-    headers = [
-        'Xaridor ID', 'Xaridor FIO', 'Telefon raqam', 'Telefon raqam','Passport', 'JSHSHR', 
-        'Tug`ilgan kun', 'Xarid limiti oy boshi', 'Joriy oy xaridi', 'Qoldiq','Xarid %','Xarid uchun kelish sanasi',
-        'Sotuvchi','Mas`ul hodim'
-    ]
-    
-    # Write the headers to the first row
-    sheet.append(headers)
-
-    # Ensure that data is not empty and properly structured
-    if not data:
-        print("No data to write to the file.")
-    
-    # Write data rows
-    for row in data:
-        # Ensure the row is a dictionary and append values to the Excel sheet
-        sheet.append([
-            row.get('id', ''),
-            row.get('name', ''),
-            row.get('phone', [])[0] if len(row.get('phone', [])) > 0 else '',  # Ensure phone has at least one element
-            row.get('phone', [])[1] if len(row.get('phone', [])) > 1 else '',  # Ensure there's a second phone number
-            row.get('passport', ''),
-            row.get('pnfl', ''),
-            row.get('birth_date', ''),
-            row.get('purchase_limit', ''),
-            row.get('current_purchase', ''),
-            row.get('balance', ''),
-            row.get('percent', ''),
-            row.get('come_date', ''),
-            row.get('seller', ''),
-            row.get('manager', ''),
-        ])
-
-    # Set the column widths (optional)
-    column_widths = [10, 45, 15, 15, 11, 15, 15, 30, 30, 30,8,24,45,45]
-    for i, width in enumerate(column_widths, 1):
-        sheet.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
-
-    # Create a response object with 'Content-Type' for Excel
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        charset='utf-8'
-    )
-    response['Content-Disposition'] = 'attachment; filename="people_data.xlsx"'
-
-    try:
-        # Save the workbook to the response object
-        workbook.save(response)
-    except Exception as e:
-        print(f"Error saving workbook: {e}")
-        response = HttpResponse("Error generating file.", status=500)
-
-    return response
 
 @login_required_session
 def home(request):
-    print(request.session.items())
+    
     uuid = request.session.get('user',None)
     try:
         guest = Guest.objects.get(uuid=uuid)
     except Guest.DoesNotExist:
         return redirect('login')
-    context = {'name':guest.name,'branches':branches,'guest':guest}
+    context = {
+        'name':guest.name,
+        'branches':branches,
+        'guest':guest}
     return render(request, 'index.html',context)
 
 
@@ -143,7 +42,7 @@ def login(request,db=get_db_myconfig()):
             messages.error(request,'Bunday foydalanuvchi mavjud emas')
             return render(request,'auth/login.html')
         
-        if user and verify_password(hashed_password=user[5],plain_password=password):
+        if user and func.verify_password(hashed_password=user[5],plain_password=password):
             guest = Guest.objects.get_or_create(
                 user=user[0],
                 name=user[1],
@@ -168,6 +67,11 @@ def customers_list(request,branch):
 
     uuid = request.session.get('user',None)
     branch = request.session.get('branch',None)
+    sellers = [{
+        "id":i[0],
+        "name":i[1],
+        } for i in func.get_data(query=queries.sellers,db=get_db(dbname=branch))]
+    
     if not branch:
         return redirect('login')
     
@@ -179,12 +83,15 @@ def customers_list(request,branch):
     if guest.branch != 'ofice':
         branch = guest.branch
 
-    if request.method == 'POST' and guest.branch=='ofice':
+    if request.method == 'POST' and guest.branch=='ofice' and request.POST.get('branch'):
         branch = request.POST.get('branch')
         request.session['branch'] = branch
+    
+    if request.method == 'POST' and request.POST.get('seller'):
+        print(f"seller id: {request.POST.get('seller')}")
 
-    ball,ball_limit = [int(i) for i in get_data(query=variable,db=get_db(dbname=branch))[0]]
-    params = (get_date()[0],get_date()[1],ball,ball,ball_limit)
+    ball,ball_limit = [int(i) for i in func.get_data(query=queries.variable,db=get_db(dbname=branch))[0]]
+    params = (func.get_date()[0],func.get_date()[1],ball,ball,ball_limit)
     
     customer = [{
         "id":i[0],
@@ -200,14 +107,21 @@ def customers_list(request,branch):
         "come_date":i[11],
         "seller":i[7],
         "manager":i[10]
-        } for i in get_data(customers,params=params,db=get_db(dbname=branch))]
+        } for i in func.get_data(queries.customers,params=params,db=get_db(dbname=branch))]
     
     if request.method == 'POST' and request.POST.get('excel') and customer:
         # customer = []
-        return download_people_xlsx(request,customer)
-    queryset = paginator_page(customer,10,request)
+        return func.download_people_xlsx(request,customer)
+    queryset = func.paginator_page(customer,10,request)
     
-    context = {"customers":queryset,'name':guest.name,'branches':branches,'guest':guest}
+    context = {
+        "customers":queryset,
+        "sellers":sellers,
+        'name':guest.name,
+        'branches':branches,
+        'guest':guest,
+        'is_customer_page': True,
+        }
     return render(request, 'customers/list.html', context)
 
 @login_required_session
@@ -217,12 +131,11 @@ def customer_detail(request,id):
     if not branch:
         return redirect('login')
 
-    ball,ball_limit = [int(i) for i in get_data(query=variable,db=get_db(dbname=branch))[0]]
-    params = (get_date()[0],get_date()[1],ball,ball,ball_limit)
-    all_customer = get_data(query=customers,params=params,db=get_db(dbname=branch))
-    num = binary_search(all_customer,id)
+    ball,ball_limit = [int(i) for i in func.get_data(query=queries.variable,db=get_db(dbname=branch))[0]]
+    params = (func.get_date()[0],func.get_date()[1],ball,ball,ball_limit)
+    all_customer = func.get_data(query=queries.customers,params=params,db=get_db(dbname=branch))
+    num = func.binary_search(all_customer,id)
     customer = all_customer[num]
-    print(customer)
     uuid = request.session.get('user',None)
     try:
         guest = Guest.objects.get(uuid=uuid)
@@ -247,7 +160,14 @@ def customer_detail(request,id):
     if customer.get('id') != id:
         customer = None
 
-    context = {"customer":customer,'name':guest.name,'comments':comments,'branches':branches,'guest':guest}
+    context = {
+        "customer":customer,
+        'name':guest.name,
+        'comments':comments,
+        'branches':branches,
+        'guest':guest,
+        'is_customer_page': True,
+        }
     return render(request,'customers/detail.html',context=context)
 
 
@@ -272,14 +192,131 @@ def create_comment(request):
     return redirect('customer_detail',customer_id)
 
 
-def seller_detail(request,id=None):
+def seller_list(request,branch):
     uuid = request.session.get('user',None)
+    branch = request.session.get('branch',None)
     try:
         guest = Guest.objects.get(uuid=uuid)
     except Guest.DoesNotExist:
         return redirect('login')
-    sellers = range(5)
-    context = {'branches':branches,'guest':guest,'sellers':sellers}
+    if guest.branch != 'ofice':
+        branch = guest.branch
+
+    if request.method == 'POST' and guest.branch=='ofice':
+        branch = request.POST.get('branch')
+        request.session['branch'] = branch
+    seller_s = [{"id":i[0],"name":i[1]} for i in func.get_data(query=queries.sellers,db=get_db(dbname=branch))]
+
+    context = {
+        "sellers":seller_s,
+        'branches':branches,
+        'guest':guest,
+        'is_customer_page': False,
+        }
+    return render(request,'sellers/list.html',context)
+
+
+
+def seller_detail(request,id=None,s_id=None):
+    
+    uuid = request.session.get('user',None)
+    branch = request.session.get('branch')
+
+    try:
+        guest = Guest.objects.get(uuid=uuid)
+    except Guest.DoesNotExist:
+        return redirect('login')
+    params = [id,func.get_date()[0],func.get_date()[1]]
+    
+    sellers_deal = [{
+        "deal_number":i[0],
+        "date":i[1],
+        "name":i[2],
+        "lname":i[3],
+        "pnfl":i[4],
+        "sum_one":i[5],
+        "sum_two":i[6],
+        "term":i[7],
+        "s_id":i[8],
+        "id":i[9]
+        } for i in func.get_data(query=queries.seller_deal,db=get_db(dbname=branch),params=params)]
+    print(sellers_deal)
+    void_contracts = [
+        {
+            "deal_number":i[0],
+            "date":i[1],
+            "name":i[2],
+            "lname":i[3],
+            "pnfl":i[4],
+            "sum_one":i[5],
+            "sum_two":i[6],
+            "term":i[7]
+            } for i in func.get_data(query=queries.void_contracts,db=get_db(dbname=branch),params=params)
+        ]
+    s_id = s_id if s_id else sellers_deal[0]['s_id'] 
+    
+    params_info = [s_id,func.get_date()[1]]
+    seller_info = [
+        {
+            "deal_number":i[0],
+            "date":i[1],
+            "sum_one":i[2],
+            "term":i[3],
+            "monthly_payment":round(i[2] / i[3],2) if i[3] != 0 else 0,
+            "debt":i[4],
+            } for i in func.get_data(query=queries.seller_info,db=get_db(dbname=branch),params=params_info)
+    ]
+
+    context = {
+        'branches':branches,
+        'guest':guest,
+        'sellers_deal':sellers_deal,
+        'void_contracts':void_contracts,
+        'seller_info':seller_info,
+        'is_customer_page': False,
+        }
     return render(request,'sellers/detail.html',context)
+
+
+def upload(request):
+    print(request.FILES.get('file'))
+
+def process_excel_file(file,branch):
+    # Read the Excel file into a pandas DataFrame
+    df = pd.read_excel(file)
+
+    # Process each row in the DataFrame
+    for index, item in df.iterrows():
+        customer_id = item.get('xaridor id')
+        seller_id = item.get('xodim id')
+        dbname = item.get('filial')
+
+        print(dbname)
+        print(branches.values())
+        print(dbname in branches.keys())
+        print(seller_id > 0)
+        print(customer_id > 0)
+        
+        if customer_id > 0 and seller_id > 0 and dbname==branch:
+            # func.update_xaridor(branch=dbname,seller_id=seller_id,customer_id=customer_id)
+            print(1)
+        else:
+            return False
+    else:
+        return 
+    True
+        
+
+# Django view to handle the file upload
+def upload_excel(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        uploaded_file = request.FILES['file']
+        res = process_excel_file(file=uploaded_file,branch=request.session.get('branch'))
+
+    if res:
+        messages.success(request, 'Sotuvchilar muvaffaqiyatli biriktirildi.')
+        return redirect('customers',request.session.get('branch'))
+    messages.error(request,'Fayl ichidagi ma`lumotlar to`g`riligiga e`tibor bering!')
+        
 
 

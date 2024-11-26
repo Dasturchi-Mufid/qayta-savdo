@@ -101,7 +101,7 @@
                                             class="pcoded-mtext">Menu</span></a>
                                     <ul class="pcoded-submenu">
                                         <li class=""><a href="{% url 'customers' guest.branch %}" class="">Xaridorlar</a></li>
-                                        <li class=""><a href="{% url 'seller_detail' 1 %}" class="">Sotuvchilar</a></li>
+                                        <li class=""><a href="{% url 'seller_list' guest.branch %}" class="">Sotuvchilar</a></li>
                                         <!-- <li class=""><a href="dashboard-help.html" class="">Helpdesk<span class="pcoded-badge label label-danger">NEW</span></a></li> -->
                                     </ul>
                                 </li>
@@ -145,7 +145,7 @@
                     </div>
                 </li>
             </ul>
-            <form method="post" action="{% url 'customers' guest.branch %}">
+            <form method="post" action="{% if is_customer_page %}{% url 'customers' guest.branch %}{% else %}{% url 'seller_list' guest.branch %}{% endif %}">
                 {% csrf_token %}
                 <select name="branch" class="form-control" onchange="this.form.submit()" {% if guest.branch != 'ofice' %} disabled {% endif %}>
                     {% for key,branch in branches.items %}

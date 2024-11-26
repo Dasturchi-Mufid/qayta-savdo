@@ -1,5 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+    #progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #progress-bar {
+            height: 30px;
+            width: 0;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+        #status {
+            margin-top: 10px;
+            color: red;
+        }
+</style>
 <section class="pcoded-main-container">
     <div class="pcoded-wrapper">
         <div class="pcoded-content">
@@ -25,8 +46,42 @@
                                                     </form> 
                                                     <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="basic-btn" type="button" onclick="printTable()">
                                                         <span>Print</span>
-                                                    </button> 
+                                                    </button>
+                                                    <form method="post" action="{% if is_customer_page %}{% url 'customers' guest.branch %}{% else %}{% url 'seller_list' guest.branch %}{% endif %}">
+                                                        {% csrf_token %}
+                                                        <select name="seller" class="form-control" onchange="this.form.submit()" {% if guest.branch != 'ofice' %} disabled {% endif %}>
+                                                            {% for seller in sellers %}
+                                                            
+                                                            <!-- <option {% if request.session.branch == key %} selected="selected" disabled {% endif %} value="{{key}}">{{branch}}</option> -->
+                                                            <option value="{{seller.id}}">{{seller.name}}</option>
+                                                            
+                                                            {% endfor %}
+                                                        </select>
+                                                   </form> 
+                                                   <form id="uploadForm" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="file" id="excelFile" name="file" accept=".xlsx, .xls" />
+                                                    <button type="submit">Upload</button>
+                                                </form>
+                                            
+                                                <!-- Progress Bar -->
+                                                <div id="progress-container" style="display:none;">
+                                                    <div id="progress-bar">0%</div>
                                                 </div>
+                                                
+                                                <!-- Status Text -->
+                                                <div id="status"></div>
+                                                </div>
+                                                {% if messages %}
+                                                    <div>
+                                                        {% for message in messages %}
+                                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                                                {{ message }}
+                                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
                                                 <div id="basic-btn_filter" class="dataTables_filter">
                                                     <label><input type="hidden" class="form-control form-control-sm" placeholder="" aria-controls="basic-btn"></label>
                                                 </div>
@@ -130,5 +185,88 @@ function printTable() {
     printWindow.print();
 }
 
+
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('excelFile');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const status = document.getElementById('status');
+
+    // Allowed file types (Excel)
+    const allowedFileTypes = ['.xlsx', '.xls'];
+
+    // Function to get CSRF token from cookies
+    function getCSRFToken() {
+        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
+        return csrfToken ? csrfToken[1] : null;
+    }
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('Please select a file to upload.');
+            return;
+        }
+
+        // Check if the selected file is an Excel file
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!allowedFileTypes.includes('.' + fileExtension)) {
+            // If the file is not Excel, show an error and stop
+            status.textContent = 'Error: Please upload a valid Excel file (.xlsx or .xls).';
+            status.style.color = 'red';
+            progressContainer.style.display = 'none'; // Hide progress bar
+            return;
+        }
+
+        // Show progress bar
+        progressContainer.style.display = 'block';
+        status.textContent = 'Uploading...';
+        status.style.color = 'black';
+
+        // Create FormData object and append file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Get CSRF token
+        const csrfToken = getCSRFToken();
+
+        // Create an XMLHttpRequest to handle file upload
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{% url "upload_excel" %}', true);
+
+        // Add CSRF token to the request header
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+
+        // Update the progress bar as the file uploads
+        xhr.upload.addEventListener('progress', function(event) {
+            if (event.lengthComputable) {
+                const percent = (event.loaded / event.total) * 100;
+                progressBar.style.width = percent + '%';
+                progressBar.textContent = Math.round(percent) + '%';
+            }
+        });
+
+        // Handle the upload completion
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                status.textContent = 'Upload Complete!';
+                status.style.color = 'green';
+            } else {
+                status.textContent = 'Upload Failed. Please try again.';
+                status.style.color = 'red';
+            }
+        };
+
+        // Handle errors during upload
+        xhr.onerror = function() {
+            status.textContent = 'Upload Failed. Please try again.';
+            status.style.color = 'red';
+        };
+
+        // Send the form data with the file to the server
+        xhr.send(formData);
+    });
 </script>
 {% endblock %}

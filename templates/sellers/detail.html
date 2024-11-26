@@ -19,43 +19,46 @@
                                                 <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
                                                     <thead class="border-bottom-danger">
                                                         <tr role="row">
-                                                            <th colspan="4">Hodim FISH</th>
-                                                            <th>Fillial</th>
-                                                            <th colspan="2">Sana</th>
+                                                            <th colspan="3">Hodim FISH</th>
+                                                            <th colspan="3">Fillial</th>
+                                                            <th colspan="3">Sana</th>
                                                         </tr>
                                                         <tr>
                                                             <th colspan="3">Shaxsiy reja</td>
-                                                            <th colspan="2">Joriy savdo</td>
-                                                            <th colspan="2">Atmen</td>
+                                                            <th colspan="3">Joriy savdo</td>
+                                                            <th colspan="3">Atmen</td>
                                                         </tr>
                                                         <tr>
                                                             <th colspan="3">Sof savdo</td>
-                                                            <th colspan="2">Plan bajarilishi</td>
-                                                            <th colspan="2">Orqada qolish</td>
+                                                            <th colspan="3">Plan bajarilishi</td>
+                                                            <th colspan="3">Orqada qolish</td>
                                                         </tr>
                                                         <tr>
-                                                            <th colspan="7">Savdolar</td>
+                                                            <th colspan="9">Savdolar</td>
                                                         </tr>
                                                         <tr>
                                                             <th>№</th>
                                                             <th>Shartnoma</th>
                                                             <th>Sana</th>
-                                                            <th>Mijoz</th>
+                                                            <th colspan="2">Mijoz</th>
+                                                            <th>JSHSHIR</th>
                                                             <th>Birdan summa</th>
                                                             <th>Nasiya summa</th>
                                                             <th>Muddat</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {% for i in sellers %}
+                                                        {% for seller in sellers_deal %}
                                                             <tr class="border-bottom-primary">
                                                                 <th>{{forloop.counter}}</th>
-                                                                <th>Q_100</th>
-                                                                <th>01.01.2001</th>
-                                                                <th>F I SH</th>
-                                                                <th>15 000 000</th>
-                                                                <th>20 000 000</th>
-                                                                <th>12 oy</th>
+                                                                <th>{{seller.deal_number}}</th>
+                                                                <th>{{seller.date}}</th>
+                                                                <th><a href="{% url 'seller_detail' seller.id seller.s_id %}">{{seller.name}}</a></th>
+                                                                <th><a href="{% url 'seller_detail' seller.id seller.s_id %}">{{seller.lname}}</a></th>
+                                                                <th>{{seller.pnfl}}</th>
+                                                                <th>{{seller.sum_one}}</th>
+                                                                <th>{{seller.sum_two}}</th>
+                                                                <th>{{seller.term}}</th>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
@@ -63,28 +66,60 @@
                                                 <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
                                                     <thead>
                                                         <tr>
-                                                            <th colspan="7">Atmenlar</th>
+                                                            <th colspan="9">Atmenlar</th>
                                                         </tr>
                                                         <tr>
                                                             <th>№</th>
                                                             <th>Shartnoma</th>
-                                                            <th>Sanasi</th>
-                                                            <th>FISH</th>
+                                                            <th>Sana</th>
+                                                            <th colspan="2">Mijoz</th>
+                                                            <th>JSHSHIR</th>
                                                             <th>Birdan summa</th>
                                                             <th>Nasiya summa</th>
                                                             <th>Muddat</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {% for i in sellers %}
+                                                        {% for contract in void_contracts %}
+                                                            <tr class="border-bottom-primary">
+                                                                <th>{{forloop.counter}}</th>
+                                                                <th>{{contract.deal_number}}</th>
+                                                                <th>{{contract.date}}</th>
+                                                                <th>{{contract.name}}</th>
+                                                                <th>{{contract.lname}}</th>
+                                                                <th>{{contract.pnfl}}</th>
+                                                                <th>{{contract.sum_one}}</th>
+                                                                <th>{{contract.sum_two}}</th>
+                                                                <th>{{contract.term}}</th>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
+                                                    <thead>
                                                         <tr>
-                                                            <th>{{forloop.counter}}</th>
-                                                            <th>Q_100</th>
-                                                            <th>01.01.2001</th>
-                                                                <th>FISH</th>
-                                                                <th>15 000 000</th>
-                                                                <th>20 000 000</th>
-                                                                <th>12 oy</th>
+                                                            <th colspan="9">Xaridor shartnomalari</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>№</th>
+                                                            <th>Shartnoma</th>
+                                                            <th>Sana</th>
+                                                            <th>Nasiya summa</th>
+                                                            <th>Muddat</th>
+                                                            <th>Oylik to`lov</th>
+                                                            <th>Joriy qarzi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for seller in seller_info %}
+                                                            <tr class="border-bottom-primary">
+                                                                <th>{{forloop.counter}}</th>
+                                                                <th>{{seller.deal_number}}</th>
+                                                                <th>{{seller.date}}</th>
+                                                                <th>{{seller.sum_one}}</th>
+                                                                <th>{{seller.term}}</th>
+                                                                <th>{{seller.monthly_payment}}</th>
+                                                                <th>{{seller.debt}}</th>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>

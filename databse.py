@@ -34,3 +34,5 @@ def get_db(dbname:str):
         )
     cur = con.cursor()
     return cur
+
+

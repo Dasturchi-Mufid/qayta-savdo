@@ -87,3 +87,51 @@ ORDER BY
 """
 
 variable = """select ball_limit,ball from uzgaruvchi"""
+
+seller_deal = """SELECT s.SHRAQAM,s.SANA,x.FIO,x.LFIO ,x.PNFL ,sum(c.MIQDOR*c.NARX),sum(c.JAMI),s.MUDDAT,x.id,s.savdochi_id FROM SHARTNOMA s
+LEFT JOIN XARIDOR x ON x.id=s.XARIDOR_ID 
+LEFT JOIN CHIQIM c ON c.SHARTNOMA_ID =s.ID 
+WHERE s.SAVDOCHI_ID = ? AND s.SANA BETWEEN ? AND ?
+GROUP BY s.SANA,s.SHRAQAM,x.FIO,s.MUDDAT,x.LFIO ,x.PNFL,x.id,s.savdochi_id 
+ORDER BY s.SANA,s.SHRAQAM,x.FIO,s.MUDDAT,x.LFIO ,x.PNFL,x.id,s.savdochi_id
+"""
+
+sellers = """SELECT f.id,f.FIO FROM FOYDALANUVCHI f 
+LEFT JOIN LAVOZIM l2 ON l2.id=f.LAVOZIM_ID 
+WHERE LOWER(l2.nomi) LIKE '%sotuvchi%'
+ORDER BY FIO 
+"""
+
+void_contracts = """SELECT 
+    s.SHRAQAM,
+    s.SANA,
+    x.FIO,x.LFIO ,x.PNFL, 
+    SUM(c.MIQDOR * c.NARX) AS TOTAL_AMOUNT,
+    SUM(c.JAMI) AS TOTAL_SNARX,
+    s.MUDDAT
+FROM 
+    SHARTNOMA s
+LEFT JOIN 
+    CHIQIM c ON c.SHARTNOMA_ID = s.ID
+LEFT JOIN 
+    TULOV t ON t.SHARTNOMA_ID = s.ID
+LEFT JOIN 
+    XARIDOR x ON x.ID = s.XARIDOR_ID
+LEFT JOIN 
+    TURTULOV t2 ON t2.ID = t.BOSHQA_ID
+WHERE 
+    t2.OTMENA IS TRUE 
+    AND s.SAVDOCHI_ID = ? AND t.YVAQT BETWEEN ? AND ?
+GROUP BY 
+    s.SANA, x.FIO, s.SHRAQAM, s.MUDDAT,x.LFIO ,x.PNFL 
+ORDER BY 
+    s.SANA, x.FIO, s.SHRAQAM, s.MUDDAT,x.LFIO ,x.PNFL ;
+"""
+
+seller_info = """SELECT s.SHRAQAM,s.sana,s.SUMMA,s.MUDDAT,sum(g.QOLDIQ) AS qarz FROM XARIDOR x 
+LEFT JOIN SHARTNOMA s ON s.XARIDOR_ID =x.ID 
+LEFT JOIN GRAFIK g ON g.SHARTNOMA_ID =s.ID 
+WHERE x.id= ? AND g.SANA <= ?
+GROUP BY s.SANA ,s.SHRAQAM ,s.SUMMA,s.MUDDAT
+ORDER BY s.SANA ,s.SHRAQAM ,s.SUMMA,s.MUDDAT
+"""

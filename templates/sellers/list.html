@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header table-card-header">
+                                        <h5>Sotuvchilar haqida</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dt-responsive table-responsive">
+                                            <div id="basic-btn_wrapper" class="dataTables_wrapper dt-bootstrap4">
+                                                <table id="basic-btn" class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
+                                                    <thead>
+                                                        <tr role="row">
+                                                            <th>№</th>
+                                                            <th>ID</th>
+                                                            <th>FISH</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for seller in sellers %}
+                                                        <tr>
+                                                            <td>{{forloop.counter}}</td>
+                                                            <td>{{seller.id}}</td>
+                                                            <td><a href="{% url 'seller_detail' seller.id  %}">{{seller.name}}</a></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
