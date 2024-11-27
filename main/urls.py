@@ -11,9 +11,10 @@ urlpatterns = [
     path('comment-create/',views.create_comment,name='create_comment'),
 
     path('sellers/<str:branch>/',views.seller_list,name='seller_list'),
-    # path('seller/<int:id>/',views.seller_detail,name='seller_detail'),
+    path('seller/<int:id>/',views.seller_detail,name='seller_detail'),
+    path('customer-deals/<int:id>/',views.customer_deals,name='customer_deals'),
     # path('seller/<int:id>/<int:s_id>',views.seller_detail,name='seller_detail_s_id'),
-    re_path(r'^seller/(?P<id>\d+)/(?P<s_id>\d+)?$', views.seller_detail, name='seller_detail'),
+    # re_path(r'^seller/(?P<id>\d+)/(?P<s_id>\d+)?$', views.seller_detail, name='seller_detail'),
     path('upload/',views.upload_excel,name='upload_excel')
     
 ]

@@ -7,7 +7,7 @@ from .models import Guest, Comment
 from .decorators import login_required_session
 from . import queries
 from . import func
-import os, json
+import os, json,datetime
 import pandas as pd
 
 
@@ -67,10 +67,6 @@ def customers_list(request,branch):
 
     uuid = request.session.get('user',None)
     branch = request.session.get('branch',None)
-    sellers = [{
-        "id":i[0],
-        "name":i[1],
-        } for i in func.get_data(query=queries.sellers,db=get_db(dbname=branch))]
     
     if not branch:
         return redirect('login')
@@ -92,7 +88,18 @@ def customers_list(request,branch):
 
     ball,ball_limit = [int(i) for i in func.get_data(query=queries.variable,db=get_db(dbname=branch))[0]]
     params = (func.get_date()[0],func.get_date()[1],ball,ball,ball_limit)
-    
+
+    sellers = [{
+        "id":i[0],
+        "name":i[1],
+        } for i in func.get_data(query=queries.sellers,db=get_db(dbname=branch))]
+    if request.session.get('id'):
+        del request.session['id']
+    query = queries.customers
+    if request.method == 'POST' and int(request.POST.get('id',0)):
+        id = request.session['id'] = int(request.POST.get('id'))
+        query = queries.customers.replace('x.ODDIY_XARIDOR IS NOT TRUE',f'x.ODDIY_XARIDOR IS NOT TRUE AND f.id={id}')
+        print(request.session['id'])
     customer = [{
         "id":i[0],
         "name":i[1],
@@ -100,19 +107,20 @@ def customers_list(request,branch):
         "passport":i[3],
         "pnfl":i[2],
         "birth_date":i[4],
-        "purchase_limit":i[9],
+        "purchase_limit":round(i[9],2),
         "current_purchase":i[8],
         "balance":i[9]-i[8],
-        "percent":round((i[9]-i[8])/i[9]*100,2) if i[9] != 0 else 0,
+        "percent":round((i[8]/i[9]*100),2) if i[9] != 0 else 0,
         "come_date":i[11],
         "seller":i[7],
         "manager":i[10]
-        } for i in func.get_data(queries.customers,params=params,db=get_db(dbname=branch))]
+        } for i in func.get_data(query=query,params=params,db=get_db(dbname=branch))]
+    
     
     if request.method == 'POST' and request.POST.get('excel') and customer:
         # customer = []
         return func.download_people_xlsx(request,customer)
-    queryset = func.paginator_page(customer,10,request)
+    queryset = func.paginator_page(customer,100,request)
     
     context = {
         "customers":queryset,
@@ -152,7 +160,7 @@ def customer_detail(request,id):
     "purchase_limit": customer[9],
     "current_purchase": customer[8],
     "balance": customer[9] - customer[8],
-    "percent": round((customer[9] - customer[8]) / customer[9] * 100, 2) if customer[9] != 0 else 0,
+    "percent": round(customer[8] / customer[9] * 100, 2) if customer[9] != 0 else 0,
     "come_date": customer[11],
     "seller": customer[7],
     "manager": customer[10]
@@ -183,12 +191,14 @@ def create_comment(request):
         return redirect('login')
     if request.method == 'POST':
         comment = request.POST.get('comment')
-        Comment.objects.create(
-            guest=guest,
-            customer_id=customer_id,
-            branch=request.session.get('branch'),
-            comment=comment
-        )
+        print(comment)
+        # Comment.objects.create(
+        #     guest=guest,
+        #     customer_id=customer_id,
+        #     branch=request.session.get('branch'),
+        #     comment=comment
+        # )
+        print(request.POST.get('date'))
     return redirect('customer_detail',customer_id)
 
 
@@ -216,18 +226,24 @@ def seller_list(request,branch):
     return render(request,'sellers/list.html',context)
 
 
-
-def seller_detail(request,id=None,s_id=None):
+def seller_detail(request,id=None):
     
     uuid = request.session.get('user',None)
     branch = request.session.get('branch')
+    start,end = func.get_date()
+    today = datetime.datetime.today()
+
+    if request.method == 'POST':
+        
+        start = datetime.datetime.strptime(request.POST.get('start'),'%Y-%m-%d')
+        end = datetime.datetime.strptime(request.POST.get('end'),'%Y-%m-%d')
 
     try:
         guest = Guest.objects.get(uuid=uuid)
     except Guest.DoesNotExist:
         return redirect('login')
-    params = [id,func.get_date()[0],func.get_date()[1]]
     
+    params = [id,start,end]
     sellers_deal = [{
         "deal_number":i[0],
         "date":i[1],
@@ -240,7 +256,7 @@ def seller_detail(request,id=None,s_id=None):
         "s_id":i[8],
         "id":i[9]
         } for i in func.get_data(query=queries.seller_deal,db=get_db(dbname=branch),params=params)]
-    print(sellers_deal)
+    
     void_contracts = [
         {
             "deal_number":i[0],
@@ -253,33 +269,69 @@ def seller_detail(request,id=None,s_id=None):
             "term":i[7]
             } for i in func.get_data(query=queries.void_contracts,db=get_db(dbname=branch),params=params)
         ]
-    s_id = s_id if s_id else sellers_deal[0]['s_id'] 
     
-    params_info = [s_id,func.get_date()[1]]
-    seller_info = [
-        {
-            "deal_number":i[0],
-            "date":i[1],
-            "sum_one":i[2],
-            "term":i[3],
-            "monthly_payment":round(i[2] / i[3],2) if i[3] != 0 else 0,
-            "debt":i[4],
-            } for i in func.get_data(query=queries.seller_info,db=get_db(dbname=branch),params=params_info)
-    ]
+
+    params_seller = [start,end,start,end,start,end,id]
+    seller = func.get_data(query=queries.seller,db=get_db(dbname=branch),params=params_seller)
+    print(seller)
+    if seller:
+        seller=seller[0]
+        seller = {
+            "name":seller[0],
+            "position":seller[1],
+            "plan":seller[2],
+            "trade":seller[3],
+            "void_contracts":seller[4],
+            "net_trade":seller[3]-seller[4],
+            "doing_plan":round((seller[3]-seller[4])*100/seller[2],2) if seller[2] != 0 else 0,
+            "balance":round(seller[3]-seller[4]-(seller[2]/end.day*today.day),2) if seller[2] != 0 and end.day != 0 else 0,
+        }
+    else:
+        seller = {}
 
     context = {
+        "start":start.strftime('%Y-%m-%d'),
+        "end":end.strftime('%Y-%m-%d'),
+        "seller":seller,
         'branches':branches,
         'guest':guest,
         'sellers_deal':sellers_deal,
         'void_contracts':void_contracts,
-        'seller_info':seller_info,
         'is_customer_page': False,
         }
     return render(request,'sellers/detail.html',context)
 
+def customer_deals(request,id):
+    print(id)
+    branch = request.session.get('branch')
+    uuid = request.session.get('user',None)
 
-def upload(request):
-    print(request.FILES.get('file'))
+    try:
+        guest = Guest.objects.get(uuid=uuid)
+    except Guest.DoesNotExist:
+        return redirect('login')
+    if not branch:
+        return redirect('login')
+    end = func.get_date()[1]
+    params_info = [id,end]
+    seller_info = [
+            {
+                "deal_number":i[0],
+                "date":i[1],
+                "sum_one":i[2],
+                "term":i[3],
+                "monthly_payment":round(i[2] / i[3],2) if i[3] != 0 else 0,
+                "debt":i[4],
+                } for i in func.get_data(query=queries.seller_info,db=get_db(dbname=branch),params=params_info)
+        ]
+    context = {
+        'guest':guest,
+        'is_customer_page': False,
+        'seller_info': seller_info,
+        'branches':branches,
+    }
+    return render(request,'sellers/customer_deals.html',context)
+
 
 def process_excel_file(file,branch):
     # Read the Excel file into a pandas DataFrame
@@ -290,33 +342,34 @@ def process_excel_file(file,branch):
         customer_id = item.get('xaridor id')
         seller_id = item.get('xodim id')
         dbname = item.get('filial')
-
-        print(dbname)
-        print(branches.values())
-        print(dbname in branches.keys())
-        print(seller_id > 0)
-        print(customer_id > 0)
         
         if customer_id > 0 and seller_id > 0 and dbname==branch:
-            # func.update_xaridor(branch=dbname,seller_id=seller_id,customer_id=customer_id)
-            print(1)
+            func.update_xaridor(branch=dbname,seller_id=seller_id,customer_id=customer_id)
         else:
             return False
     else:
-        return 
-    True
+        return True
+
         
 
 # Django view to handle the file upload
 def upload_excel(request):
+    res = None
+    branch = request.session.get('branch')
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
-        res = process_excel_file(file=uploaded_file,branch=request.session.get('branch'))
-
+        res = process_excel_file(file=uploaded_file,branch=branch)
+        print("Result:", res)
     if res:
         messages.success(request, 'Sotuvchilar muvaffaqiyatli biriktirildi.')
-        return redirect('customers',request.session.get('branch'))
-    messages.error(request,'Fayl ichidagi ma`lumotlar to`g`riligiga e`tibor bering!')
-        
+        print("Message added: success")
+        return redirect('customers',branch=branch)
+    else:
+        messages.error(request,'Fayl ichidagi ma`lumotlar to`g`riligiga e`tibor bering!')
+        print("Message added: error")
+    print(f'branch upload: {branch}')
+    for message in messages.get_messages(request):
+        print(f"Message: {message.message} | Level: {message.level_tag}")
+    return redirect('customers',branch=branch)
 
 

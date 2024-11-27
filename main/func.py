@@ -132,3 +132,6 @@ def update_xaridor(branch,seller_id,customer_id):
             cur.close()
         if con:
             con.close()
+
+def add_date():
+    pass

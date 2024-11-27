@@ -1,6 +1,43 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block content %}
+<style>
+/* The main cell */
+.name-cell {
+    position: relative;
+    /* display: inline-block; */
+}
+
+/* Style for the first name */
+.name-first {
+    display: inline-block;
+    padding-right: 10px; /* Optional: Adds some space between the names */
+}
+
+.name-second {
+    visibility: hidden;
+    position: absolute;
+    top: -20px; /* Moves the second name above the first name */
+    left: 0; /* Align it to the left of the first name */
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 5px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+
+
+/* On hover, make the second name visible */
+.name-cell:hover .name-second {
+    visibility: visible; /* Show the second name */
+    opacity: 1; /* Makes it fully visible */
+}
+
+
+</style>
 <section class="pcoded-main-container">
     <div class="pcoded-wrapper">
         <div class="pcoded-content">
@@ -19,20 +56,37 @@
                                                 <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
                                                     <thead class="border-bottom-danger">
                                                         <tr role="row">
-                                                            <th colspan="3">Hodim FISH</th>
-                                                            <th colspan="3">Fillial</th>
-                                                            <th colspan="3">Sana</th>
+                                                            <th colspan="4">{{seller.name}}</th>
+                                                            <th colspan="5">
+                                                                <form method="post">
+                                                                    {% csrf_token %}
+                                                                    <div class="row">
+                                                                        <div class="col-sm-3 mb-1">
+                                                                            <input type="date" name="start" class="form-control"
+                                                                                value="{{start}}">
+                                                                        </div>
+                                                                        <div class="col-sm-3 mb-1">
+                                                                            <input type="date" name="end" class="form-control"
+                                                                                value="{{end}}">
+                                                                        </div>
+                                                                        <div class="col-sm-3 mb-1">
+                                                                            <button class="btn btn-primary" type="submit">Tanlash</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </form>
+                                                            </th>
                                                         </tr>
                                                         <tr>
-                                                            <th colspan="3">Shaxsiy reja</td>
-                                                            <th colspan="3">Joriy savdo</td>
-                                                            <th colspan="3">Atmen</td>
+                                                            <th colspan="3">Shaxsiy reja: {{seller.plan|intcomma}}</td>
+                                                            <th colspan="3">Joriy savdo: {{seller.trade|intcomma}}</td>
+                                                            <th colspan="3">Bekor bo`lgan shartnomalar: {{seller.void_contracts|intcomma}}</td>
                                                         </tr>
                                                         <tr>
-                                                            <th colspan="3">Sof savdo</td>
-                                                            <th colspan="3">Plan bajarilishi</td>
-                                                            <th colspan="3">Orqada qolish</td>
+                                                            <th colspan="3">Sof savdo: {{seller.net_trade|intcomma}}</td>
+                                                            <th colspan="3">Plan bajarilishi: {{seller.doing_plan|intcomma}}%</td>
+                                                            <th colspan="3">Orqada qolish: {{seller.balance|intcomma}}</td>
                                                         </tr>
+                                                        {% if sellers_deal %}
                                                         <tr>
                                                             <th colspan="9">Savdolar</td>
                                                         </tr>
@@ -40,7 +94,7 @@
                                                             <th>№</th>
                                                             <th>Shartnoma</th>
                                                             <th>Sana</th>
-                                                            <th colspan="2">Mijoz</th>
+                                                            <th>Mijoz</th>
                                                             <th>JSHSHIR</th>
                                                             <th>Birdan summa</th>
                                                             <th>Nasiya summa</th>
@@ -52,17 +106,22 @@
                                                             <tr class="border-bottom-primary">
                                                                 <th>{{forloop.counter}}</th>
                                                                 <th>{{seller.deal_number}}</th>
-                                                                <th>{{seller.date}}</th>
-                                                                <th><a href="{% url 'seller_detail' seller.id seller.s_id %}">{{seller.name}}</a></th>
-                                                                <th><a href="{% url 'seller_detail' seller.id seller.s_id %}">{{seller.lname}}</a></th>
+                                                                <th>{{seller.date|date:"d.m.Y"}}</th>
+                                                                <td class="name-cell">
+                                                                    <span class="name-first"><a href="{% url 'customer_deals' seller.s_id %}">{{seller.name}}</a></span>
+                                                                    <span class="name-second">{{seller.lname}}</span>
+                                                                </td>
                                                                 <th>{{seller.pnfl}}</th>
-                                                                <th>{{seller.sum_one}}</th>
-                                                                <th>{{seller.sum_two}}</th>
+                                                                <th>{{seller.sum_one|intcomma}}</th>
+                                                                <th>{{seller.sum_two|intcomma}}</th>
                                                                 <th>{{seller.term}}</th>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
+                                                    {% else %}</thead>{% endif %}
                                                 </table>
+                                                
+                                                {% if void_contracts %}
                                                 <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
                                                     <thead>
                                                         <tr>
@@ -72,7 +131,7 @@
                                                             <th>№</th>
                                                             <th>Shartnoma</th>
                                                             <th>Sana</th>
-                                                            <th colspan="2">Mijoz</th>
+                                                            <th>Mijoz</th>
                                                             <th>JSHSHIR</th>
                                                             <th>Birdan summa</th>
                                                             <th>Nasiya summa</th>
@@ -84,46 +143,20 @@
                                                             <tr class="border-bottom-primary">
                                                                 <th>{{forloop.counter}}</th>
                                                                 <th>{{contract.deal_number}}</th>
-                                                                <th>{{contract.date}}</th>
-                                                                <th>{{contract.name}}</th>
-                                                                <th>{{contract.lname}}</th>
+                                                                <th>{{contract.date|date:"d.m.Y"}}</th>
+                                                                <td class="name-cell">
+                                                                    <span class="name-first">{{contract.name}}</span>
+                                                                    <span class="name-second">{{contract.lname}}</span>
+                                                                </td>
                                                                 <th>{{contract.pnfl}}</th>
-                                                                <th>{{contract.sum_one}}</th>
-                                                                <th>{{contract.sum_two}}</th>
+                                                                <th>{{contract.sum_one|intcomma}}</th>
+                                                                <th>{{contract.sum_two|intcomma}}</th>
                                                                 <th>{{contract.term}}</th>
                                                             </tr>
                                                         {% endfor %}
                                                     </tbody>
                                                 </table>
-                                                <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
-                                                    <thead>
-                                                        <tr>
-                                                            <th colspan="9">Xaridor shartnomalari</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>№</th>
-                                                            <th>Shartnoma</th>
-                                                            <th>Sana</th>
-                                                            <th>Nasiya summa</th>
-                                                            <th>Muddat</th>
-                                                            <th>Oylik to`lov</th>
-                                                            <th>Joriy qarzi</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {% for seller in seller_info %}
-                                                            <tr class="border-bottom-primary">
-                                                                <th>{{forloop.counter}}</th>
-                                                                <th>{{seller.deal_number}}</th>
-                                                                <th>{{seller.date}}</th>
-                                                                <th>{{seller.sum_one}}</th>
-                                                                <th>{{seller.term}}</th>
-                                                                <th>{{seller.monthly_payment}}</th>
-                                                                <th>{{seller.debt}}</th>
-                                                            </tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>

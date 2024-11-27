@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load humanize %}
+
 {% block content %}
 <style>
     #progress-container {
@@ -8,7 +10,7 @@
             overflow: hidden;
             margin-top: 20px;
         }
-        #progress-bar {
+    #progress-bar {
             height: 30px;
             width: 0;
             background-color: #4caf50;
@@ -16,10 +18,71 @@
             line-height: 30px;
             color: white;
         }
-        #status {
+    #status {
             margin-top: 10px;
             color: red;
         }
+    .table-card-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px; /* Optional: Adds space between elements */
+        justify-content: space-around;
+    }
+    #uploadForm {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    /* Hiding the default file input */
+    #excelFile {
+        display: none;
+    }
+
+    /* Custom button to trigger file input */
+    .choose-file-button {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .choose-file-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Optional: Show the chosen file name */
+    #fileName {
+        margin-left: 10px;
+        font-size: 14px;
+        color: #555;
+    }
+       /* Container for the buttons and select dropdown */
+    .dt-buttons {
+        display: flex;
+        justify-content: space-between; /* Space out buttons and select */
+        align-items: center;  /* Vertically center the items */
+        width: 100%; /* Ensure the container takes the full width */
+    }
+
+    /* Container for the buttons (Excel and Print) */
+    .dt-buttons-left {
+        display: flex;
+        gap: 10px; /* Space between the Excel and Print buttons */
+    }
+
+    /* Style for buttons */
+    .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .form-control {
+        width: 200px; /* Set a specific width for the select dropdown */
+    }
 </style>
 <section class="pcoded-main-container">
     <div class="pcoded-wrapper">
@@ -30,65 +93,64 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="card">
-                                    <div class="card-header table-card-header">
-                                        <h5>Xaridorlar</h5>
-                                    </div>
                                     <div class="card-body">
                                         <div class="dt-responsive table-responsive">
                                             <div id="basic-btn_wrapper" class="dataTables_wrapper dt-bootstrap4">
-                                                <div class="dt-buttons btn-group"> 
-                                                    <form action="" method="post">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="excel" value="1">
-                                                        <button class="btn btn-secondary buttons-excel buttons-html5" tabindex="0" aria-controls="basic-btn" type="submit">
-                                                            <span>Excel</span>
+                                                <div class="dt-buttons btn-group">
+                                                    <!-- Left buttons (Excel and Print) -->
+                                                    <div class="dt-buttons-left">
+                                                        <form action="" method="post">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="excel" value="1">
+                                                            <button class="btn btn-secondary buttons-excel buttons-html5" tabindex="0" aria-controls="basic-btn" type="submit">
+                                                                <span>Excel</span>
+                                                            </button>
+                                                        </form>
+                                                
+                                                        <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="basic-btn" type="button" onclick="printTable()">
+                                                            <span>Print</span>
                                                         </button>
-                                                    </form> 
-                                                    <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="basic-btn" type="button" onclick="printTable()">
-                                                        <span>Print</span>
-                                                    </button>
-                                                    <form method="post" action="{% if is_customer_page %}{% url 'customers' guest.branch %}{% else %}{% url 'seller_list' guest.branch %}{% endif %}">
+                                                    </div>
+                                                    <div class="card-header table-card-header">
+                                                        <form id="uploadForm" enctype="multipart/form-data">
+                                                            {% csrf_token %}
+                                                            
+                                                            <!-- Custom Choose File Button -->
+                                                            <button type="button" class="choose-file-button" id="chooseFileButton">Faylni tanlang</button>
+                                                            
+                                                            <!-- Hidden file input -->
+                                                            <input type="file" id="excelFile" name="file" accept=".xlsx, .xls" />
+                                                            
+                                                            <!-- Optional: Display selected file name -->
+                                                            <span id="fileName"></span>
+                                                            
+                                                            <button type="submit" class="btn">Yuklash</button>
+                                                        </form>
+                                                    </div>
+                                                    <!-- Right select dropdown -->
+                                                    <form method="post" action="{% url 'customers' guest.branch %}">
                                                         {% csrf_token %}
-                                                        <select name="seller" class="form-control" onchange="this.form.submit()" {% if guest.branch != 'ofice' %} disabled {% endif %}>
+                                                        <select name="id" class="form-control" onchange="this.form.submit()">
+                                                            <option value="0">Barchasi</option>
                                                             {% for seller in sellers %}
-                                                            
-                                                            <!-- <option {% if request.session.branch == key %} selected="selected" disabled {% endif %} value="{{key}}">{{branch}}</option> -->
-                                                            <option value="{{seller.id}}">{{seller.name}}</option>
-                                                            
+                                                                <option {% if request.session.id == seller.id %} selected="selected" disabled {% endif %} value="{{seller.id}}">{{seller.name}}</option>
                                                             {% endfor %}
                                                         </select>
-                                                   </form> 
-                                                   <form id="uploadForm" enctype="multipart/form-data">
-                                                    {% csrf_token %}
-                                                    <input type="file" id="excelFile" name="file" accept=".xlsx, .xls" />
-                                                    <button type="submit">Upload</button>
-                                                </form>
-                                            
+                                                    </form>
+                                                </div>
+                                                <div id="status"></div>
                                                 <!-- Progress Bar -->
                                                 <div id="progress-container" style="display:none;">
                                                     <div id="progress-bar">0%</div>
                                                 </div>
-                                                
-                                                <!-- Status Text -->
-                                                <div id="status"></div>
-                                                </div>
-                                                {% if messages %}
-                                                    <div>
-                                                        {% for message in messages %}
-                                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                                                {{ message }}
-                                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                {% endif %}
                                                 <div id="basic-btn_filter" class="dataTables_filter">
                                                     <label><input type="hidden" class="form-control form-control-sm" placeholder="" aria-controls="basic-btn"></label>
                                                 </div>
-                                                <table id="basic-btn" class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
+                                                {% if customers %}
+                                                <table id="basic-btn" class="table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
                                                     <thead>
                                                         <tr role="row">
-                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Age: activate to sort column ascending" style="width: 99.1719px;">Xaridor ID</th>
+                                                            <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Age: activate to sort column ascending" style="width: 99.1719px;">ID</th>
                                                             <th class="sorting_asc" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Name: activate to sort column descending" style="width: 256.875px;">Xaridor FIO</th>
                                                             <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Position: activate to sort column ascending" style="width: 378.656px;">Telefon raqam</th>
                                                             <th class="sorting" tabindex="0" aria-controls="basic-btn" rowspan="1" colspan="1" aria-label="Office: activate to sort column ascending" style="width: 193.453px;">Xaridor passport</th>
@@ -113,51 +175,54 @@
                                                                     {{ phone }}<br>
                                                                 {% endfor %}
                                                             </td>
-                                                            <td>{{seller.passport}}</td>
-                                                            <td>{% if seller.pnfl %} {{seller.pnfl}} {% else %} <div style="color: red;">JSHSHIR mavjud emas!{% endif %}</div></td>
+                                                            <td>{% if seller.passport %} {{seller.passport}} {% else %}{% endif %}</div></td>
+                                                            <td>{% if seller.pnfl %} {{seller.pnfl}} {% else %}{% endif %}</div></td>
                                                             <td>{{seller.birth_date|date:"d.m.Y"}}</td>
-                                                            <td>{{seller.purchase_limit}}</td>
-                                                            <td>{{seller.current_purchase}}</td>
-                                                            <td>{{seller.balance}}</td>
+                                                            <td>{{seller.purchase_limit|intcomma}}</td>
+                                                            <td>{{seller.current_purchase|intcomma}}</td>
+                                                            <td>{{seller.balance|intcomma}}</td>
                                                             <td>{{seller.percent}}</td>
-                                                            <td>{% if seller.come_date %} {{seller.come_date}} {% else %} <div style="color: red;">Kelish sanasi aniq emas!{% endif %}</div></td>
-                                                            <td>{% if seller.seller %} {{seller.seller}} {% else %} <div style="color: red;">Sotuvchi biriktirilmagan!{% endif %}</div></td>
-                                                            <td>{% if seller.manager %} {{seller.manager}} {% else %} <div style="color: red;">Mas`ul hodim biriktirilmagan!{% endif %}</div></td>
+                                                            <td>{% if seller.come_date %} {{seller.come_date}} {% else %}{% endif %}</div></td>
+                                                            <td>{% if seller.seller %} {{seller.seller}} {% else %}{% endif %}</div></td>
+                                                            <td>{% if seller.manager %} {{seller.manager}} {% else %}{% endif %}</div></td>
                                                         </tr>
                                                         {% endfor %}
                                                     </tbody>
                                                 </table>
+                                                {% else %}
+                                                <h5>Ma`lumotlar yo`q</h5>
+                                                {% endif %}
                                                 {% if customers.paginator.num_pages > 1 %}
-                                                    <div class="pagination-area">
-                                                        <!-- <div class="dataTables_info" id="basic-btn_info" role="status" aria-live="polite">{{ customers.start_index }} - {{ customers.end_index }} of {{ customers.paginator.count }}</div> -->
-                                                        <nav aria-label="Page navigation example">
-                                                            <ul class="pagination justify-content-center">
-                                                                {% if customers.has_previous %}
-                                                                    <li class="page-item">
-                                                                        <a class="page-link" href="?page={{customers.previous_page_number }}">
-                                                                            &laquo;
-                                                                        </a>
+                                                <div class="pagination-area">
+                                                    <!-- <div class="dataTables_info" id="basic-btn_info" role="status" aria-live="polite">{{ customers.start_index }} - {{ customers.end_index }} of {{ customers.paginator.count }}</div> -->
+                                                    <nav aria-label="Page navigation example">
+                                                        <ul class="pagination justify-content-center">
+                                                            {% if customers.has_previous %}
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="?page={{customers.previous_page_number }}">
+                                                                        &laquo;
+                                                                    </a>
+                                                                </li>
+                                                            {% endif %}
+                                                            {% for num in customers.paginator.page_range %}
+                                                                {% if num == customers.number %}
+                                                                    <li class="page-item active">
+                                                                    <strong> <a class="page-link" href="#" tabindex="-1">{{ num }}</a></strong>
                                                                     </li>
+                                                                {% elif num > customers.number|add:'-4' and num < customers.number|add:'3' %}
+                                                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                                                                 {% endif %}
-                                                                {% for num in customers.paginator.page_range %}
-                                                                    {% if num == customers.number %}
-                                                                        <li class="page-item active">
-                                                                        <strong> <a class="page-link" href="#" tabindex="-1">{{ num }}</a></strong>
-                                                                        </li>
-                                                                    {% elif num > customers.number|add:'-4' and num < customers.number|add:'3' %}
-                                                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                                                                    {% endif %}
-                                                                {% endfor %}
-                                                                {% if customers.has_next %}
-                                                                    <li class="page-item">
-                                                                        <a class="page-link" href="?page={{ customers.next_page_number }}">
-                                                                            &raquo;
-                                                                        </a>
-                                                                    </li>
-                                                                {% endif %}
-                                                            </ul>
-                                                        </nav>
-                                                    </div>
+                                                            {% endfor %}
+                                                            {% if customers.has_next %}
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="?page={{ customers.next_page_number }}">
+                                                                        &raquo;
+                                                                    </a>
+                                                                </li>
+                                                            {% endif %}
+                                                        </ul>
+                                                    </nav>
+                                                </div>
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -177,7 +242,7 @@
 
 function printTable() {
     var printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Print Table</title>');
+    printWindow.document.write('<html><head><title>Xaridorlar</title>');
     printWindow.document.write('</head><body>');
     printWindow.document.write(document.getElementById("basic-btn").outerHTML); // Get the HTML of the table
     printWindow.document.write('</body></html>');
@@ -206,7 +271,7 @@ function printTable() {
 
         const file = fileInput.files[0];
         if (!file) {
-            alert('Please select a file to upload.');
+            alert('Faylni tanlang.');
             return;
         }
 
@@ -214,7 +279,7 @@ function printTable() {
         const fileExtension = file.name.split('.').pop().toLowerCase();
         if (!allowedFileTypes.includes('.' + fileExtension)) {
             // If the file is not Excel, show an error and stop
-            status.textContent = 'Error: Please upload a valid Excel file (.xlsx or .xls).';
+            status.textContent = 'Error: To`g`ri fayl turini yuklang (*.xlsx yoki *.xls).';
             status.style.color = 'red';
             progressContainer.style.display = 'none'; // Hide progress bar
             return;
@@ -222,7 +287,7 @@ function printTable() {
 
         // Show progress bar
         progressContainer.style.display = 'block';
-        status.textContent = 'Uploading...';
+        status.textContent = 'Yuklanmoqda...';
         status.style.color = 'black';
 
         // Create FormData object and append file
@@ -251,22 +316,38 @@ function printTable() {
         // Handle the upload completion
         xhr.onload = function() {
             if (xhr.status === 200) {
-                status.textContent = 'Upload Complete!';
+                status.textContent = 'Fayl muvaffaqiyatli yuklandi!';
                 status.style.color = 'green';
             } else {
-                status.textContent = 'Upload Failed. Please try again.';
+                status.textContent = 'Fayl yuklashda xatolik Iltimos tekshirib qaytadan yuklang.';
                 status.style.color = 'red';
             }
         };
 
         // Handle errors during upload
         xhr.onerror = function() {
-            status.textContent = 'Upload Failed. Please try again.';
+            status.textContent = 'Fayl yuklashda xatolik Iltimos tekshirib qaytadan yuklang.';
             status.style.color = 'red';
         };
 
         // Send the form data with the file to the server
         xhr.send(formData);
+    });
+
+    // Trigger the hidden file input when the custom button is clicked
+    document.getElementById('chooseFileButton').addEventListener('click', function() {
+        document.getElementById('excelFile').click();
+    });
+
+    // Display the chosen file name
+    document.getElementById('excelFile').addEventListener('change', function() {
+        const fileInput = document.getElementById('excelFile');
+        const fileName = document.getElementById('fileName');
+        if (fileInput.files.length > 0) {
+            fileName.textContent = `${fileInput.files[0].name} fayl tanlandi`;
+        } else {
+            fileName.textContent = '';
+        }
     });
 </script>
 {% endblock %}

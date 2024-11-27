@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'main'
 ]
 
@@ -144,3 +145,5 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Whether or not to use cookies for session data
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # For database-backed sessions
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

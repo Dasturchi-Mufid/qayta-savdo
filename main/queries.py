@@ -81,7 +81,7 @@ LEFT JOIN
 LEFT JOIN 
     FOYDALANUVCHI f ON f.id = x.FOYDALANUVCHI_ID
 WHERE 
-    x.ODDIY_XARIDOR IS NOT TRUE and x.id < 100
+    x.ODDIY_XARIDOR IS NOT TRUE
 ORDER BY 
     x.id;
 """
@@ -129,9 +129,48 @@ ORDER BY
 """
 
 seller_info = """SELECT s.SHRAQAM,s.sana,s.SUMMA,s.MUDDAT,sum(g.QOLDIQ) AS qarz FROM XARIDOR x 
-LEFT JOIN SHARTNOMA s ON s.XARIDOR_ID =x.ID 
-LEFT JOIN GRAFIK g ON g.SHARTNOMA_ID =s.ID 
+LEFT JOIN SHARTNOMA s ON s.XARIDOR_ID = x.ID 
+LEFT JOIN GRAFIK g ON g.SHARTNOMA_ID = s.ID 
 WHERE x.id= ? AND g.SANA <= ?
 GROUP BY s.SANA ,s.SHRAQAM ,s.SUMMA,s.MUDDAT
 ORDER BY s.SANA ,s.SHRAQAM ,s.SUMMA,s.MUDDAT
 """
+
+seller = """WITH savdo_data AS (
+    SELECT 
+        s.SAVDOCHI_ID, 
+        SUM(c.MIQDOR * c.NARX) AS total_savdo
+    FROM SHARTNOMA s
+    LEFT JOIN CHIQIM c ON c.SHARTNOMA_ID = s.ID
+    WHERE s.SANA BETWEEN ? AND ?
+    GROUP BY s.SAVDOCHI_ID
+),
+otem_data AS (
+    SELECT 
+        s.SAVDOCHI_ID, 
+        SUM(c.MIQDOR * c.NARX) AS total_otem
+    FROM SHARTNOMA s
+    LEFT JOIN CHIQIM c ON c.SHARTNOMA_ID = s.ID
+    LEFT JOIN TULOV t ON t.SHARTNOMA_ID = s.ID
+    LEFT JOIN TURTULOV t2 ON t2.ID = t.BOSHQA_ID
+    WHERE t.YVAQT BETWEEN ? AND ?
+      AND t2.OTMENA IS TRUE
+    GROUP BY s.SAVDOCHI_ID
+),
+plan_data AS (
+  SELECT l2.LAVOZIM_ID AS lavozim_id ,l2."LIMIT"  from LLIMIT l2 
+  WHERE l2.SANA BETWEEN ? AND ?
+)
+SELECT 
+    f.FIO,
+    l.NOMI AS lavozim_nomi,
+    COALESCE(pd.limit,0) AS shaxsiy_reja,
+    COALESCE(sd.total_savdo, 0) AS savdo,
+    COALESCE(od.total_otem, 0) AS otem
+FROM FOYDALANUVCHI f
+LEFT JOIN lavozim l ON l.id=f.LAVOZIM_ID 
+LEFT JOIN savdo_data sd ON sd.SAVDOCHI_ID = f.id
+LEFT JOIN otem_data od ON od.SAVDOCHI_ID = f.id
+LEFT JOIN plan_data pd ON pd.LAVOZIM_ID=l.id
+WHERE f.id = ?;"""
+

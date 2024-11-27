@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+
+{% block content %}
+{% if seller_info %}
+<section class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info" style="text-align: center;">
+                                        <thead>
+                                            <tr>
+                                                <th colspan="9">Xaridor shartnomalari</th>
+                                            </tr>
+                                            <tr>
+                                                <th>№</th>
+                                                <th>Shartnoma</th>
+                                                <th>Sana</th>
+                                                <th>Nasiya summa</th>
+                                                <th>Muddat</th>
+                                                <th>Oylik to`lov</th>
+                                                <th>Joriy qarzi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for seller in seller_info %}
+                                                <tr class="border-bottom-primary">
+                                                    <th>{{forloop.counter}}</th>
+                                                    <th>{{seller.deal_number}}</th>
+                                                    <th>{{seller.date|date:"d.m.Y"}}</th>
+                                                    <th>{{seller.sum_one|intcomma}}</th>
+                                                    <th>{{seller.term}}</th>
+                                                    <th>{{seller.monthly_payment|intcomma}}</th>
+                                                    <th>{{seller.debt|intcomma}}</th>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

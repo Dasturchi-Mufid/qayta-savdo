@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,36 +59,13 @@
             <div class="navbar-brand header-logo">
                 <a href="{% url 'home' %}" title="logo" class="b-brand">
 
-                    <img src="{% static 'images/logo.svg' %}" alt="logo" class="logo images">
-                    <img src="{% static 'images/logo-icon.svg' %}" alt="logo" class="logo-thumb images">
+                    <img src="{% static 'images/logo-red.png' %}" alt="logo" class="logo images" width="130" height="50">
+                    <img src="{% static 'images/icon.png' %}" alt="logo" class="logo-thumb images" width="40" height="40">
                 </a>
                 <a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
             </div>
             <div class="navbar-content scroll-div">
                 <div class="layout1-nav">
-                    <ul class="sidemenu nav flex-column" role="tablist" aria-orientation="vertical">
-                        <li class="active"><a class="nav-link text-start" data-cont="navigation"><i
-                                    class="feather icon-monitor"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="ui"><i
-                                    class="feather icon-layers"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="forms"><i
-                                    class="feather feather icon-layout"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="table"><i
-                                    class="feather icon-list"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="Chart"><i
-                                    class="feather icon-pie-chart"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="Pages"><i
-                                    class="feather icon-file-text"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="App"><i class="feather icon-tv"></i></a>
-                        </li>
-                        <li class=""><a class="nav-link text-start" data-cont="Extension"><i
-                                    class="feather icon-cpu"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="Other"><i
-                                    class="feather icon-align-left"></i></a></li>
-                        <li class=""><a class="nav-link text-start" data-cont="Support"><i
-                                    class="feather icon-help-circle"></i></a></li>
-                    </ul>
-                    <a href="#!" class="toggle-sidemenu"><i class="feather icon-chevron-left"></i></a>
                     <div class="side-content">
                         <div class="sidelink navigation active">
                             <ul class="nav pcoded-inner-navbar">
@@ -133,14 +111,7 @@
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <div class="main-search open">
-                        <div class="input-group">
-                            <input type="text" id="m-search" class="form-control" placeholder="Search . . .">
-                            <a href="#!" class="input-group-append search-close">
-                                <i class="feather icon-x input-group-text"></i>
-                            </a>
-                            <span class="ms-1 input-group-append search-btn btn btn-primary">
-                                <i class="feather icon-search input-group-text"></i>
-                            </span>
+                        <div>
                         </div>
                     </div>
                 </li>
@@ -156,11 +127,9 @@
                 </select>
            </form>
             <div class="media userlist-box" style="display: flex; align-items: center; justify-content: flex-end; padding: 15px;">
-                <img class="img-fluid media-object img-radius" src="{% static 'images/user/avatar-4.jpg' %}" alt="Generic placeholder image" style="margin-right: 15px; width: 50px; height: 50px;">
                 <div class="media-body" style="display: block;">
                     <h6 class="chat-header">
                         {{guest.name}}
-                        <small class="d-block text-c-green">{{guest.branch}}</small>
                     </h6>
                     <a href="{% url 'logout' %}" class="dud-logout" title="Logout" style="color: black;">
                         <i class="feather icon-log-out"></i>

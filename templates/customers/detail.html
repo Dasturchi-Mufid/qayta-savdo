@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block content %}
 <section class="pcoded-main-container">
@@ -19,11 +20,11 @@
                                                 {% if customer %}
                                                 <table class="table table-striped table-bordered nowrap dataTable" role="grid" aria-describedby="basic-btn_info">
                                                     <thead>
-                                                        <tr role="row">
+                                                        <!-- <tr role="row">
                                                             <th colspan="4">Mijozalr bilan ishlash oynasi</th>
                                                             <th colspan="2">Avvalgisi</th>
                                                             <th colspan="2">Keyingisi</th>
-                                                        </tr>
+                                                        </tr> -->
                                                         <tr>
                                                             <th>Xaridor ID</th>
                                                             <th>Xaridor FIO</th>
@@ -44,16 +45,29 @@
                                                                     {{ phone }}<br>
                                                                 {% endfor %}
                                                             </td>
-                                                            <td>{{customer.purchase_limit}}</td>
-                                                            <td>{{customer.current_purchase}}</td>
-                                                            <td>{{customer.balance}}</td>
+                                                            <td>{{customer.purchase_limit|intcomma}}</td>
+                                                            <td>{{customer.current_purchase|intcomma}}</td>
+                                                            <td>{{customer.balance|intcomma}}</td>
                                                             <td>{{customer.percent}}</td>
-                                                            <td>{% if customer.come_date %} {{customer.come_date}} {% else %} <div style="color: red;">Kelish sanasi aniq emas!{% endif %}</div></td>
+                                                            <td>{% if customer.come_date %} {{customer.come_date}}{% endif %}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
                                                 <form method="post" action="{% url 'create_comment' %}">
                                                     {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label class="form-label">
+                                                            Sana
+                                                        </label>
+                                                        <div class="col-lg-4 col-md-9 col-sm-12">
+                                                            <div class="input-group date">
+                                                                <input type="date" class="form-control" name="date" id="pc-datepicker-3">
+                                                                <span class="input-group-text">
+                                                                    <i class="feather icon-calendar"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Izoh</label>
                                                         <div class="input-group">
@@ -99,4 +113,13 @@
         </div>
     </div>
 </section>
+<script>
+    // Get today's date
+    const today = new Date();
+    // Format the date as YYYY-MM-DD
+    const formattedDate = today.toISOString().split('T')[0];
+
+    // Set the 'min' attribute of the date input
+    document.getElementById('pc-datepicker-3').setAttribute('min', formattedDate);
+</script>
 {% endblock %}

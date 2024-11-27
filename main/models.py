@@ -1,6 +1,19 @@
 from django.db import models
 import uuid
 
+branches = {
+    ""
+    "b":"Buxoro",
+    "f":"Farg`ona",
+    "o":"Olmaliq",
+    "q":"Quvasoy",
+    "s":"Samarqand",
+    "sh":"Shahrisabz",
+    "uc":"Uchquduq",
+    "w":"Qarshi",
+    "z":"Zarafshon"
+            }
+
 class Guest(models.Model):
     user = models.BigIntegerField()  # Link to the User model
     name = models.CharField(max_length=255)
@@ -10,6 +23,10 @@ class Guest(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.branch}"
+
+    @property
+    def display_branch(self):
+        return branches[self.branch]
 
 class Comment(models.Model):
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
