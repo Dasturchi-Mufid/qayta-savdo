@@ -49,7 +49,7 @@
                                                             <td>{{customer.current_purchase|intcomma}}</td>
                                                             <td>{{customer.balance|intcomma}}</td>
                                                             <td>{{customer.percent}}</td>
-                                                            <td>{% if customer.come_date %} {{customer.come_date}}{% endif %}</td>
+                                                            <td>{% if customer.come_date %} {{customer.come_date|date:"d.m.Y"}}{% endif %}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -89,7 +89,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>{{ comment.created_at|date:"d.m.Y H:i" }}</td>
-                                                            <td>{{comment.guest.name}}</td>
+                                                            <td>{{comment.name}}</td>
                                                         </tr>
                                                         <tr>
                                                             <th colspan="2">{{comment.comment}}</th>

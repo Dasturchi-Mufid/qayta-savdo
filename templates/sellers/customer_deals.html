@@ -22,8 +22,8 @@
                                                 <th>№</th>
                                                 <th>Shartnoma</th>
                                                 <th>Sana</th>
-                                                <th>Nasiya summa</th>
                                                 <th>Muddat</th>
+                                                <th>Nasiya summa</th>
                                                 <th>Oylik to`lov</th>
                                                 <th>Joriy qarzi</th>
                                             </tr>
@@ -34,12 +34,18 @@
                                                     <th>{{forloop.counter}}</th>
                                                     <th>{{seller.deal_number}}</th>
                                                     <th>{{seller.date|date:"d.m.Y"}}</th>
-                                                    <th>{{seller.sum_one|intcomma}}</th>
                                                     <th>{{seller.term}}</th>
+                                                    <th>{{seller.sum_one|intcomma}}</th>
                                                     <th>{{seller.monthly_payment|intcomma}}</th>
                                                     <th>{{seller.debt|intcomma}}</th>
                                                 </tr>
                                             {% endfor %}
+                                                <tr>
+                                                    <th colspan="4">Jami</th>
+                                                    <th>{{sum_one|intcomma}}</th>
+                                                    <th>{{monthly_payment|intcomma}}</th>
+                                                    <th>{{sum_debt|intcomma}}</th>
+                                                </tr>
                                         </tbody>
                                     </table>
                                 </div>

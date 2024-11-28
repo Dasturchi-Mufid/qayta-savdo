@@ -2,6 +2,7 @@ import bcrypt, datetime, calendar, openpyxl, os, fdb
 from django.core.paginator import Paginator, PageNotAnInteger,EmptyPage
 from django.http import HttpResponse
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -12,17 +13,18 @@ CHARSET = os.getenv('CHARSET')
 
 DSN_BRANCH = os.getenv('DSN_BRANCH')
 
-def binary_search(arr, target):
-    low, high = 0, arr[-1][0] - 1
-    while low <= high:
-        mid = (low + high) // 2
-        if arr[mid][0] == target:
-            return mid
-        elif arr[mid][0] < target:
-            low = mid + 1
-        else:
-            high = mid - 1
-    return -1 
+def get_first_and_last_day_of_month(date_str):
+    # date_str = '2024-10-15'
+    # date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+    date_obj = date_str
+
+    # First date of the month (set day to 1)
+    first_date = date_obj.replace(day=1)
+
+    # Last date of the month (set day to 1, move to next month, then subtract 1 day)
+    next_month = date_obj.replace(day=28) + timedelta(days=4)  # this ensures it's always in the next month
+    last_date = next_month - timedelta(days=next_month.day)
+    return first_date,last_date
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     # Check if the plain password matches the hashed password
@@ -133,5 +135,37 @@ def update_xaridor(branch,seller_id,customer_id):
         if con:
             con.close()
 
-def add_date():
-    pass
+def add_date(branch,date,customer_id):
+    try:
+        con = fdb.connect(
+            dsn=DSN_BRANCH.format(branch),
+            user=USER,
+            password=PASSWORD,
+            charset=CHARSET
+        )
+        cur = con.cursor()
+
+        cur.execute(f"UPDATE XARIDOR SET ENTRY_DATE ='{date}' WHERE id={customer_id}")
+        con.commit()
+    finally:
+        if cur:
+            cur.close()
+        if con:
+            con.close()
+def add_comment(branch,comment,seller_id,customer_id):
+    try:
+        con = fdb.connect(
+            dsn=DSN_BRANCH.format(branch),
+            user=USER,
+            password=PASSWORD,
+            charset=CHARSET
+        )
+        cur = con.cursor()
+
+        cur.execute(f"INSERT INTO client_comment (COMMENT,created_by,client_id) VALUES ('{comment}',{seller_id},{customer_id})")
+        con.commit()
+    finally:
+        if cur:
+            cur.close()
+        if con:
+            con.close()

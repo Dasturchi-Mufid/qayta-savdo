@@ -174,3 +174,13 @@ LEFT JOIN otem_data od ON od.SAVDOCHI_ID = f.id
 LEFT JOIN plan_data pd ON pd.LAVOZIM_ID=l.id
 WHERE f.id = ?;"""
 
+comment = """SELECT 
+	c.COMMENT,
+	f.FIO,
+	c.created_at
+FROM 
+	client_comment c
+LEFT JOIN 
+	FOYDALANUVCHI f ON f.ID = c.client_id
+WHERE 
+	client_id=?"""

@@ -117,6 +117,12 @@
                                                                 <th>{{seller.term}}</th>
                                                             </tr>
                                                         {% endfor %}
+                                                            <tr>
+                                                                <th colspan="5">Jami</th>
+                                                                <th>{{sum_one|intcomma}}</th>
+                                                                <th>{{sum_two|intcomma}}</th>
+                                                                <th></th>
+                                                            </tr>
                                                     </tbody>
                                                     {% else %}</thead>{% endif %}
                                                 </table>
@@ -154,6 +160,12 @@
                                                                 <th>{{contract.term}}</th>
                                                             </tr>
                                                         {% endfor %}
+                                                            <tr>
+                                                                <th colspan="5">Jami</th>
+                                                                <th>{{sum_one_void|intcomma}}</th>
+                                                                <th>{{sum_two_void|intcomma}}</th>
+                                                                <th></th>
+                                                            </tr>
                                                     </tbody>
                                                 </table>
                                                 {% endif %}

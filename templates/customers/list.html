@@ -175,16 +175,16 @@
                                                                     {{ phone }}<br>
                                                                 {% endfor %}
                                                             </td>
-                                                            <td>{% if seller.passport %} {{seller.passport}} {% else %}{% endif %}</div></td>
-                                                            <td>{% if seller.pnfl %} {{seller.pnfl}} {% else %}{% endif %}</div></td>
+                                                            <td>{% if seller.passport %} {{seller.passport}}{% endif %}</div></td>
+                                                            <td>{% if seller.pnfl %} {{seller.pnfl}}{% endif %}</div></td>
                                                             <td>{{seller.birth_date|date:"d.m.Y"}}</td>
                                                             <td>{{seller.purchase_limit|intcomma}}</td>
                                                             <td>{{seller.current_purchase|intcomma}}</td>
                                                             <td>{{seller.balance|intcomma}}</td>
                                                             <td>{{seller.percent}}</td>
-                                                            <td>{% if seller.come_date %} {{seller.come_date}} {% else %}{% endif %}</div></td>
-                                                            <td>{% if seller.seller %} {{seller.seller}} {% else %}{% endif %}</div></td>
-                                                            <td>{% if seller.manager %} {{seller.manager}} {% else %}{% endif %}</div></td>
+                                                            <td>{% if seller.come_date %} {{seller.come_date|date:"d.m.Y"}}{% endif %}</div></td>
+                                                            <td>{% if seller.seller %} {{seller.seller}}{% endif %}</div></td>
+                                                            <td>{% if seller.manager %} {{seller.manager}}{% endif %}</div></td>
                                                         </tr>
                                                         {% endfor %}
                                                     </tbody>

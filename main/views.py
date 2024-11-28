@@ -23,13 +23,9 @@ def home(request):
     uuid = request.session.get('user',None)
     try:
         guest = Guest.objects.get(uuid=uuid)
+        return redirect('customers',guest.branch)
     except Guest.DoesNotExist:
         return redirect('login')
-    context = {
-        'name':guest.name,
-        'branches':branches,
-        'guest':guest}
-    return render(request, 'index.html',context)
 
 
 def login(request,db=get_db_myconfig()):
@@ -82,9 +78,7 @@ def customers_list(request,branch):
     if request.method == 'POST' and guest.branch=='ofice' and request.POST.get('branch'):
         branch = request.POST.get('branch')
         request.session['branch'] = branch
-    
-    if request.method == 'POST' and request.POST.get('seller'):
-        print(f"seller id: {request.POST.get('seller')}")
+
 
     ball,ball_limit = [int(i) for i in func.get_data(query=queries.variable,db=get_db(dbname=branch))[0]]
     params = (func.get_date()[0],func.get_date()[1],ball,ball,ball_limit)
@@ -99,7 +93,7 @@ def customers_list(request,branch):
     if request.method == 'POST' and int(request.POST.get('id',0)):
         id = request.session['id'] = int(request.POST.get('id'))
         query = queries.customers.replace('x.ODDIY_XARIDOR IS NOT TRUE',f'x.ODDIY_XARIDOR IS NOT TRUE AND f.id={id}')
-        print(request.session['id'])
+        
     customer = [{
         "id":i[0],
         "name":i[1],
@@ -118,8 +112,8 @@ def customers_list(request,branch):
     
     
     if request.method == 'POST' and request.POST.get('excel') and customer:
-        # customer = []
         return func.download_people_xlsx(request,customer)
+    
     queryset = func.paginator_page(customer,100,request)
     
     context = {
@@ -138,18 +132,15 @@ def customer_detail(request,id):
 
     if not branch:
         return redirect('login')
-
+    query = queries.customers.replace('x.ODDIY_XARIDOR IS NOT TRUE',f'x.ODDIY_XARIDOR IS NOT TRUE AND x.id={id}')
     ball,ball_limit = [int(i) for i in func.get_data(query=queries.variable,db=get_db(dbname=branch))[0]]
     params = (func.get_date()[0],func.get_date()[1],ball,ball,ball_limit)
-    all_customer = func.get_data(query=queries.customers,params=params,db=get_db(dbname=branch))
-    num = func.binary_search(all_customer,id)
-    customer = all_customer[num]
+    customer = func.get_data(query=query,params=params,db=get_db(dbname=branch))[0]
     uuid = request.session.get('user',None)
     try:
         guest = Guest.objects.get(uuid=uuid)
     except Guest.DoesNotExist:
         return redirect('login')
-    comments = Comment.objects.filter(customer_id=customer[0],branch=branch).order_by('-created_at')
     customer = {
     "id": customer[0],
     "name": customer[1],
@@ -165,6 +156,12 @@ def customer_detail(request,id):
     "seller": customer[7],
     "manager": customer[10]
 }
+    comments = Comment.objects.filter(customer_id=customer.get('id'),branch=branch).order_by('-created_at')
+    comments = [{
+        "comment":i[0],
+        "name":i[1],
+        "created_at":i[2]
+        } for i in func.get_data(query=queries.comment,db=get_db(dbname=branch),params=[id])]
     if customer.get('id') != id:
         customer = None
 
@@ -178,7 +175,7 @@ def customer_detail(request,id):
         }
     return render(request,'customers/detail.html',context=context)
 
-
+@login_required_session
 def create_comment(request):
     if request.method == 'GET':
         return HttpResponse({"<center><h1>Method not allowed</h1></center>"})
@@ -190,18 +187,22 @@ def create_comment(request):
     except Guest.DoesNotExist:
         return redirect('login')
     if request.method == 'POST':
+        date = datetime.datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
         comment = request.POST.get('comment')
-        print(comment)
-        # Comment.objects.create(
-        #     guest=guest,
-        #     customer_id=customer_id,
-        #     branch=request.session.get('branch'),
-        #     comment=comment
-        # )
-        print(request.POST.get('date'))
+        branch = request.session.get('branch')
+        
+        func.add_date(branch=branch,date=date,customer_id=customer_id)
+        func.add_comment(branch=branch,comment=comment,seller_id=guest.user,customer_id=customer_id)
+        Comment.objects.create(
+            guest=guest,
+            customer_id=customer_id,
+            branch=request.session.get('branch'),
+            comment=comment
+        )
+
     return redirect('customer_detail',customer_id)
 
-
+@login_required_session
 def seller_list(request,branch):
     uuid = request.session.get('user',None)
     branch = request.session.get('branch',None)
@@ -225,13 +226,14 @@ def seller_list(request,branch):
         }
     return render(request,'sellers/list.html',context)
 
-
+@login_required_session
 def seller_detail(request,id=None):
     
     uuid = request.session.get('user',None)
     branch = request.session.get('branch')
     start,end = func.get_date()
-    today = datetime.datetime.today()
+    today = end = datetime.datetime.today()
+    
 
     if request.method == 'POST':
         
@@ -242,6 +244,9 @@ def seller_detail(request,id=None):
         guest = Guest.objects.get(uuid=uuid)
     except Guest.DoesNotExist:
         return redirect('login')
+
+    month_start,month_end = func.get_first_and_last_day_of_month(start)
+    
     
     params = [id,start,end]
     sellers_deal = [{
@@ -256,7 +261,8 @@ def seller_detail(request,id=None):
         "s_id":i[8],
         "id":i[9]
         } for i in func.get_data(query=queries.seller_deal,db=get_db(dbname=branch),params=params)]
-    
+    sum_one = sum(i['sum_one'] for i in sellers_deal)
+    sum_two = sum(i['sum_two'] for i in sellers_deal)
     void_contracts = [
         {
             "deal_number":i[0],
@@ -269,11 +275,12 @@ def seller_detail(request,id=None):
             "term":i[7]
             } for i in func.get_data(query=queries.void_contracts,db=get_db(dbname=branch),params=params)
         ]
-    
+    sum_one_void = sum(i['sum_one'] for i in void_contracts)
+    sum_two_void = sum(i['sum_two'] for i in void_contracts)
+ 
 
-    params_seller = [start,end,start,end,start,end,id]
+    params_seller = [start,end,start,end,month_start,month_end,id]
     seller = func.get_data(query=queries.seller,db=get_db(dbname=branch),params=params_seller)
-    print(seller)
     if seller:
         seller=seller[0]
         seller = {
@@ -284,10 +291,12 @@ def seller_detail(request,id=None):
             "void_contracts":seller[4],
             "net_trade":seller[3]-seller[4],
             "doing_plan":round((seller[3]-seller[4])*100/seller[2],2) if seller[2] != 0 else 0,
-            "balance":round(seller[3]-seller[4]-(seller[2]/end.day*today.day),2) if seller[2] != 0 and end.day != 0 else 0,
+            "balance":round(seller[3]-seller[4]-(seller[2]/month_end.day*end.day),2),
         }
     else:
         seller = {}
+
+    end = today if request.method == "GET" else end
 
     context = {
         "start":start.strftime('%Y-%m-%d'),
@@ -297,12 +306,17 @@ def seller_detail(request,id=None):
         'guest':guest,
         'sellers_deal':sellers_deal,
         'void_contracts':void_contracts,
+        'sum_one':sum_one,
+        'sum_two':sum_two,
+        'sum_one_void':sum_one_void,
+        'sum_two_void':sum_two_void,
         'is_customer_page': False,
         }
     return render(request,'sellers/detail.html',context)
 
+@login_required_session
 def customer_deals(request,id):
-    print(id)
+    
     branch = request.session.get('branch')
     uuid = request.session.get('user',None)
 
@@ -324,11 +338,18 @@ def customer_deals(request,id):
                 "debt":i[4],
                 } for i in func.get_data(query=queries.seller_info,db=get_db(dbname=branch),params=params_info)
         ]
+    sum_one = sum(i['sum_one'] for i in seller_info)
+    monthly_payment = sum(i['monthly_payment'] for i in seller_info)
+    sum_debt = sum(i['debt'] for i in seller_info)
+
     context = {
         'guest':guest,
-        'is_customer_page': False,
         'seller_info': seller_info,
         'branches':branches,
+        'sum_one':sum_one,
+        'monthly_payment':monthly_payment,
+        'sum_debt':sum_debt,
+        'is_customer_page': False,
     }
     return render(request,'sellers/customer_deals.html',context)
 
@@ -351,25 +372,17 @@ def process_excel_file(file,branch):
         return True
 
         
-
-# Django view to handle the file upload
+@login_required_session
 def upload_excel(request):
     res = None
     branch = request.session.get('branch')
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
         res = process_excel_file(file=uploaded_file,branch=branch)
-        print("Result:", res)
+        
     if res:
-        messages.success(request, 'Sotuvchilar muvaffaqiyatli biriktirildi.')
-        print("Message added: success")
         return redirect('customers',branch=branch)
-    else:
-        messages.error(request,'Fayl ichidagi ma`lumotlar to`g`riligiga e`tibor bering!')
-        print("Message added: error")
-    print(f'branch upload: {branch}')
-    for message in messages.get_messages(request):
-        print(f"Message: {message.message} | Level: {message.level_tag}")
+    
     return redirect('customers',branch=branch)
 
 
